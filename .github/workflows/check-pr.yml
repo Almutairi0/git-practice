@@ -1,0 +1,45 @@
+name: Check participant PR
+
+on:
+  pull_request:
+    paths:
+      - "participants/**"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -e
+          changed=$(git diff --name-only "$BASE" HEAD -- participants/)
+          echo "Changed files:"; echo "$changed"
+          fail=0
+          for f in $changed; do
+            if [ "$f" = "participants/_template.md" ] || [ "$f" = "participants/octocat.md" ]; then
+              echo "::error file=$f::لا تعدّل القالب أو المثال. انسخ القالب في ملف جديد باسمك."
+              fail=1; continue
+            fi
+            case "$f" in
+              *.md) ;;
+              *) echo "::error file=$f::الملف لازم ينتهي بـ .md"; fail=1; continue ;;
+            esac
+            expected="participants/${AUTHOR}.md"
+            if [ "$(echo "$f" | tr '[:upper:]' '[:lower:]')" != "$(echo "$expected" | tr '[:upper:]' '[:lower:]')" ]; then
+              echo "::error file=$f::اسم الملف لازم يكون اسم المستخدم حقك: $expected"
+              fail=1; continue
+            fi
+            if [ -f "$f" ] && grep -q "اكتب اسمك هنا" "$f"; then
+              echo "::error file=$f::نسيت تكتب اسمك بدال (اكتب اسمك هنا)"
+              fail=1
+            fi
+          done
+          if [ $fail -eq 0 ]; then echo "✅ كل شي تمام! بانتظار المراجعة."; fi
+          exit $fail

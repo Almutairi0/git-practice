@@ -1,0 +1,14 @@
+name: "🐞 لقيت مشكلة"
+description: خطأ إملائي، رابط خربان، أو أي شي مو مضبوط في الـrepo
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: وش المشكلة؟
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: وين؟ (اسم الملف)
